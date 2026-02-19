@@ -5,16 +5,45 @@ import { Search, Wind, Droplets, Cloud, Sun, CloudRain } from "lucide-react";
 function App() {
   const [data, setData] = useState({});
   const [location, setLocation] = useState("");
+  const [history, setHistory] = useState([]);
 
   const API_KEY = import.meta.env.VITE_WEATHER_KEY;
   const url = `/weather?q=${location}&units=metric&appid=${API_KEY}`;
 
+  const saveToHistory = (city) => {
+    const now = new Date().getTime();
+    const expiry = now + 24 * 60 * 60 * 1000;
+    let currentHistory =
+      JSON.parse(localStorage.getItem("weatherHistory")) || [];
+    currentHistory = currentHistory.filter(
+      (item) => item.city.toLowerCase() !== city.toLowerCase(),
+    );
+    currentHistory.unshift({ city, expiry });
+    currentHistory = currentHistory.slice(0, 10);
+    localStorage.setItem("weatherHistory", JSON.stringify(currentHistory));
+    setHistory(currentHistory);
+  };
+  const fetchWeatherByCity = async (city) => {
+    try {
+      const response = await axios.get(
+        `/weather?q=${city}&units=metric&appid=${API_KEY}`,
+      );
+      setData(response.data);
+      saveToHistory(city);
+    } catch (error) {
+      console.error(error);
+      alert("Kota tidak ditemukan!");
+    }
+  };
+
   const searchLocation = async (event) => {
     if (event.key === "Enter") {
+      if (!location.trim()) return;
       try {
         const response = await axios.get(url);
         setData(response.data);
         console.log(response.data);
+        saveToHistory(location);
       } catch (error) {
         console.error(error);
         alert("Kota tidak ditemukan!");
@@ -23,20 +52,22 @@ function App() {
     }
   };
 
-  useEffect(() => {
-    const fetchDefault = async () => {
-      try {
-        const response = await axios.get(
-          `/weather?q=Jakarta&units=metric&appid=${API_KEY}`,
-        );
-        setData(response.data); // Set datanya ke state
-      } catch (error) {
-        console.log(error);
-      }
-    };
+  const handleHistoryClick = (city) => {
+    fetchWeatherByCity(city);
+  };
 
-    fetchDefault();
-  }, [API_KEY]);
+  useEffect(() => {
+    const saved = localStorage.getItem("weatherHistory");
+    if (saved) {
+      const now = Date.now();
+      const parsed = JSON.parse(saved);
+      const validHistory = parsed.filter((item) => now < item.expiry);
+      localStorage.setItem("weatherHistory", JSON.stringify(validHistory));
+      setHistory(validHistory);
+    }
+
+    fetchWeatherByCity("Jakarta");
+  }, []);
 
   const getWeatherIcon = (main) => {
     switch (main) {
@@ -63,7 +94,7 @@ function App() {
           <input
             value={location}
             onChange={(event) => setLocation(event.target.value)}
-            onKeyPress={searchLocation}
+            onKeyDown={searchLocation}
             placeholder="Cari Kota..."
             className="bg-white/10 shadow-xl backdrop-blur-lg py-4 pr-4 pl-12 border border-white/20 focus:border-blue-400 rounded-2xl outline-none w-full placeholder:text-white/30 transition-all duration-300"
           />
@@ -92,7 +123,13 @@ function App() {
               {getWeatherIcon(data.weather ? data.weather[0].main : "")}
               <div className="mt-4">
                 <span className="font-black text-8xl tracking-tighter">
-                  {data.main?.temp.toFixed()}
+                  {data.main && (
+                    <>
+                      <span className="font-black text-8xl tracking-tighter">
+                        {Math.round(data.main.temp)}
+                      </span>
+                    </>
+                  )}
                 </span>
                 <span className="font-light text-blue-300 text-4xl">°C</span>
               </div>
@@ -123,6 +160,22 @@ function App() {
                 </div>
               </div>
             </div>
+            {/* History Chips */}
+            {history.length > 0 && (
+              <div className="flex flex-wrap justify-center gap-2 mt-4 px-4 w-full max-w-md">
+                <p className="mb-1 w-full text-white/40 text-xs text-center uppercase tracking-widest">
+                  Riwayat 24 Jam Terakhir
+                </p>
+                {history.map((item, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleHistoryClick(item.city)}
+                    className="bg-white/5 hover:bg-blue-500/20 backdrop-blur-md px-3 py-1.5 border border-white/10 hover:border-blue-400/50 rounded-lg text-sm capitalize active:scale-95 transition-all">
+                    {item.city}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
