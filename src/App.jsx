@@ -82,98 +82,117 @@ function App() {
     }
   };
 
+  const formatTime = (unix) => {
+    return new Date(unix * 1000).toLocaleTimeString("id-ID", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
   return (
-    <div className="flex flex-col items-center bg-linear-to-br from-slate-900 via-blue-900 to-slate-900 min-h-screen font-sans text-white antialiased">
-      {/* Search Section */}
-      <div className="mt-16 px-4 w-full max-w-md">
-        <div className="group relative">
+    <div className="flex flex-col items-center bg-slate-900 min-h-screen text-white">
+      {/* Search */}
+      <div className="mt-12 px-4 w-full max-w-sm">
+        <div className="relative">
           <Search
-            className="top-1/2 left-4 absolute text-white/40 group-focus-within:text-blue-400 transition-colors -translate-y-1/2"
-            size={20}
+            size={18}
+            className="top-1/2 left-4 absolute text-slate-400 -translate-y-1/2"
           />
           <input
             value={location}
-            onChange={(event) => setLocation(event.target.value)}
+            onChange={(e) => setLocation(e.target.value)}
             onKeyDown={searchLocation}
-            placeholder="Cari Kota..."
-            className="bg-white/10 shadow-xl backdrop-blur-lg py-4 pr-4 pl-12 border border-white/20 focus:border-blue-400 rounded-2xl outline-none w-full placeholder:text-white/30 transition-all duration-300"
+            placeholder="Cari kota..."
+            className="bg-slate-800 py-3 pr-4 pl-11 border border-slate-700 focus:border-slate-500 rounded-xl focus:outline-none w-full placeholder:text-slate-500 text-sm"
           />
         </div>
       </div>
 
-      {/* Weather Display Section */}
+      {/* Weather Card */}
       {data.name && (
-        <div className="mt-10 px-4 w-full max-w-md animate-in duration-500 fade-in zoom-in">
-          <div className="relative bg-white/10 shadow-2xl backdrop-blur-xl p-8 border border-white/20 rounded-[2.5rem] overflow-hidden text-center">
-            {/* Dekorasi Cahaya di Belakang */}
-            <div className="-top-10 -right-10 absolute bg-blue-500/20 blur-3xl rounded-full w-32 h-32"></div>
-
-            <p className="mb-1 font-medium text-blue-200 text-lg">
+        <div className="mt-8 px-4 w-full max-w-sm">
+          <div className="bg-slate-800 p-6 border border-slate-700 rounded-2xl text-center">
+            {/* Date */}
+            <p className="text-slate-400 text-xs">
               {new Date().toLocaleDateString("id-ID", {
                 weekday: "long",
                 day: "numeric",
                 month: "long",
               })}
             </p>
-            <h1 className="mb-8 font-bold text-4xl tracking-tight">
-              {data.name}
-            </h1>
 
-            <div className="flex flex-col items-center mb-8">
-              {getWeatherIcon(data.weather ? data.weather[0].main : "")}
-              <div className="mt-4">
-                <span className="font-black text-8xl tracking-tighter">
-                  {data.main && (
-                    <>
-                      <span className="font-black text-8xl tracking-tighter">
-                        {Math.round(data.main.temp)}
-                      </span>
-                    </>
-                  )}
-                </span>
-                <span className="font-light text-blue-300 text-4xl">°C</span>
+            {/* Location */}
+            <h1 className="mt-1 font-semibold text-2xl">{data.name}</h1>
+            <p className="text-slate-400 text-xs tracking-wide">
+              {data.sys?.country}
+            </p>
+
+            {/* Temperature */}
+            <div className="flex flex-col items-center mt-6">
+              {getWeatherIcon(data.weather?.[0]?.main)}
+              <div className="mt-4 font-semibold text-6xl">
+                {Math.round(data.main.temp)}
+                <span className="ml-1 text-slate-400 text-3xl">°C</span>
               </div>
-              <p className="mt-2 font-medium text-blue-100 text-xl uppercase tracking-[0.2em]">
-                {data.weather ? data.weather[0].description : null}
+              <p className="mt-2 text-slate-400 text-xs uppercase tracking-widest">
+                {data.weather?.[0]?.description}
               </p>
             </div>
 
-            {/* Grid Info Detail */}
-            <div className="gap-4 grid grid-cols-2 mt-8 pt-8 border-white/10 border-t">
-              <div className="flex justify-center items-center gap-3 bg-white/5 p-4 rounded-2xl">
-                <Droplets className="text-blue-400" size={24} />
+            {/* Sunrise & Sunset */}
+            <div className="gap-3 grid grid-cols-2 mt-6 text-sm">
+              <div className="flex items-center gap-3 bg-slate-700/40 p-3 rounded-xl">
+                <Sun size={18} className="text-yellow-400" />
                 <div className="text-left">
-                  <p className="text-blue-200/60 text-xs uppercase">
-                    Kelembapan
-                  </p>
-                  <p className="font-bold text-lg">{data.main?.humidity}%</p>
+                  <p className="text-slate-400 text-xs">Sunrise</p>
+                  <p className="font-medium">{formatTime(data.sys.sunrise)}</p>
                 </div>
               </div>
-              <div className="flex justify-center items-center gap-3 bg-white/5 p-4 rounded-2xl">
-                <Wind className="text-blue-400" size={24} />
+
+              <div className="flex items-center gap-3 bg-slate-700/40 p-3 rounded-xl">
+                <Cloud size={18} className="text-orange-400" />
                 <div className="text-left">
-                  <p className="text-blue-200/60 text-xs uppercase">Angin</p>
-                  <p className="font-bold text-lg">
-                    {data.wind?.speed}{" "}
-                    <span className="font-normal text-xs">m/s</span>
-                  </p>
+                  <p className="text-slate-400 text-xs">Sunset</p>
+                  <p className="font-medium">{formatTime(data.sys.sunset)}</p>
                 </div>
               </div>
             </div>
-            {/* History Chips */}
+
+            {/* Humidity & Wind */}
+            <div className="gap-3 grid grid-cols-2 mt-4 text-sm">
+              <div className="flex items-center gap-3 bg-slate-700/40 p-3 rounded-xl">
+                <Droplets size={18} className="text-blue-400" />
+                <div className="text-left">
+                  <p className="text-slate-400 text-xs">Humidity</p>
+                  <p className="font-medium">{data.main.humidity}%</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 bg-slate-700/40 p-3 rounded-xl">
+                <Wind size={18} className="text-blue-400" />
+                <div className="text-left">
+                  <p className="text-slate-400 text-xs">Wind</p>
+                  <p className="font-medium">{data.wind.speed} m/s</p>
+                </div>
+              </div>
+            </div>
+
+            {/* History */}
             {history.length > 0 && (
-              <div className="flex flex-wrap justify-center gap-2 mt-4 px-4 w-full max-w-md">
-                <p className="mb-1 w-full text-white/40 text-xs text-center uppercase tracking-widest">
+              <div className="mt-6">
+                <p className="mb-2 text-[10px] text-slate-500 text-center uppercase tracking-widest">
                   Riwayat 24 Jam Terakhir
                 </p>
-                {history.map((item, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handleHistoryClick(item.city)}
-                    className="bg-white/5 hover:bg-blue-500/20 backdrop-blur-md px-3 py-1.5 border border-white/10 hover:border-blue-400/50 rounded-lg text-sm capitalize active:scale-95 transition-all">
-                    {item.city}
-                  </button>
-                ))}
+                <div className="flex flex-wrap justify-center gap-2">
+                  {history.map((item, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleHistoryClick(item.city)}
+                      className="bg-slate-700/50 hover:bg-slate-600 px-3 py-1 rounded-full text-slate-200 text-xs transition">
+                      {item.city}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
           </div>
