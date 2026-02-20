@@ -21,6 +21,7 @@ function App() {
     currentHistory.unshift({ city, expiry });
     currentHistory = currentHistory.slice(0, 10);
     localStorage.setItem("weatherHistory", JSON.stringify(currentHistory));
+    localStorage.setItem("lastCity", city);
     setHistory(currentHistory);
   };
   const fetchWeatherByCity = async (city) => {
@@ -57,16 +58,22 @@ function App() {
   };
 
   useEffect(() => {
-    const saved = localStorage.getItem("weatherHistory");
-    if (saved) {
+    const savedHistory = localStorage.getItem("weatherHistory");
+    if (savedHistory) {
       const now = Date.now();
-      const parsed = JSON.parse(saved);
+      const parsed = JSON.parse(savedHistory);
       const validHistory = parsed.filter((item) => now < item.expiry);
       localStorage.setItem("weatherHistory", JSON.stringify(validHistory));
       setHistory(validHistory);
     }
 
-    fetchWeatherByCity("Jakarta");
+    const lastCity = localStorage.getItem("lastCity");
+
+    if (lastCity) {
+      fetchWeatherByCity(lastCity);
+    } else {
+      fetchWeatherByCity("Jakarta");
+    }
   }, []);
 
   const getWeatherIcon = (main) => {
